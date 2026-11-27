@@ -1,0 +1,50 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Every GitHub build gets a higher version number, so new builds install over old ones.
+def buildNumber = (System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int
+
+android {
+    namespace 'com.punchline.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.punchline.app'
+        minSdk 19
+        targetSdk 34
+        versionCode buildNumber
+        versionName "1.${buildNumber}"
+    }
+
+    signingConfigs {
+        // If the build supplies a fixed key (signing.jks), use it so updates keep installing
+        // over each other. Otherwise fall back to the throwaway debug key.
+        fixed {
+            def ks = rootProject.file('signing.jks')
+            if (ks.exists()) {
+                storeFile ks
+                storePassword System.getenv('SIGNING_PASSWORD') ?: ''
+                keyAlias 'gaterunner'
+                keyPassword System.getenv('SIGNING_PASSWORD') ?: ''
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            if (rootProject.file('signing.jks').exists()) {
+                signingConfig signingConfigs.fixed
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint {
+        abortOnError false
+    }
+}
